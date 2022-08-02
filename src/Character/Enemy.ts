@@ -4,8 +4,12 @@ export default class Enemy{
 	private static imgKey = 'enemy'
 	private static imgPath : string | undefined;
 	enemies? : Phaser.Physics.Arcade.Group;
+	fireInterval : number;
+	nextFire : number;
 	constructor (imgPath : string) {
 		Enemy.imgPath = imgPath;
+		this.fireInterval = 500;
+		this.nextFire = 0;
 	}
 	private makeEnemy(x : number, y : number) : void {
 		if (this.enemies == undefined)
@@ -20,13 +24,16 @@ export default class Enemy{
 	create(curScene : Phaser.Scene)
 	{
 		this.enemies = curScene.physics.add.group({
-			collideWorldBounds : true
+			collideWorldBounds : true,
+			bounceX: 0,
+			bounceY: 0
 		});
-		this.makeEnemy(100, 10);
-		this.makeEnemy(120, 10);
+		this.makeEnemy(100, 100);
+		this.makeEnemy(120, 100);
 	}
-	update()
+	update(time : number, delta : number)
 	{
+		if (time < this.nextFire) return ;
 
 	}
 };

@@ -4,12 +4,15 @@ export default class Player{
 	private img: string;
 	body? : Phaser.Types.Physics.Arcade.ImageWithDynamicBody;
 	bullets? : Phaser.Physics.Arcade.Group;
+	nextFire : number;
 	imgKey: string;
 	hp : number;
-	constructor(hp_ : number, imgPath : string) {
+
+	constructor(scene : Phaser.Scene, hp_ : number, imgPath : string) {
 		this.hp = hp_;
 		this.img = imgPath;
 		this.imgKey = 'player';
+		this.nextFire = scene.time.now;
 	}
 	preload(curScene : Phaser.Scene){
 		curScene.load.image(this.imgKey, this.img);
@@ -19,7 +22,9 @@ export default class Player{
 		this.body.setCollideWorldBounds(true);
 		this.bullets = curScene.physics.add.group({
 			collideWorldBounds:true,
-			velocityY: -100
+			velocityY: -100,
+			bounceX:0,
+			bounceY:0
 		});
 		curScene.physics.world.on('worldbounds', (body) => {
 			const obj = body.gameObject as Phaser.Physics.Arcade.Body;
@@ -44,9 +49,11 @@ export default class Player{
 		  this.body.setVelocityY(-100);
 		}
 		if(cursor.space.isDown){
-			const newBullet = this.bullets.create(this.body.body.center.x, this.body.body.center.y + 10,
+			if (time < this.nextFire) return ;
+			const newBullet = this.bullets.create(this.body.body.center.x, this.body.body.center.y - 5,
 				'bullet_player') as Phaser.Types.Physics.Arcade.ImageWithDynamicBody;
 			newBullet.body.onWorldBounds = true;
+			this.nextFire = time + 500;
 		}
 
 	}
