@@ -20,7 +20,6 @@ export default class Player{
 		this.body = this.curScene.physics.add.image(200, 100, this.imgKey);
 		this.body.setCollideWorldBounds(true);
 		this.bullets = this.curScene.physics.add.group({
-
 			collideWorldBounds:true,
 			velocityY: -100
 		});
@@ -43,7 +42,13 @@ export default class Player{
 		  this.body.setVelocityY(-100);
 		}
 		if(cursor.space.isDown){
-		  this.bullets.create(this.body.body.center.x, this.body.body.center.y + 10, 'bullet_player');
+			const newBullet = this.bullets.create(this.body.body.center.x, this.body.body.center.y + 10,
+				'bullet_player') as Phaser.Types.Physics.Arcade.ImageWithDynamicBody;
+			newBullet.body.onWorldBounds = true;
 		}
+		this.curScene.physics.world.on('worldbounds', (body) => {
+			const obj = body.gameObject as Phaser.Physics.Arcade.Body;
+			obj.destroy();
+		})
 	}
 }
