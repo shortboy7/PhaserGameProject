@@ -13,18 +13,12 @@ export default class MainGameScene extends Phaser.Scene
     this.enemies = new Enemy('assets/airplane.png');
   }
 
-  checkCollide() : void {
-    console.log('bomb!');
-  }
 	preload()
   {
     this.load.image('sky', 'assets/sky.png');
     this.load.image('bullet_player', 'assets/bullet_player.png');
     this.player.preload(this);
     this.enemies.preload(this);
-    if (this.player.bullets == undefined || this.enemies.enemies == undefined) return ;
-    this.physics.add.collider(this.player.bullets, this.enemies.enemies);
-    this.physics.add.overlap(this.player.bullets, this.enemies.enemies, this.checkCollide, undefined);
   }
 
   create()
@@ -32,6 +26,13 @@ export default class MainGameScene extends Phaser.Scene
     this.add.image(400, 300, 'sky');
     this.player.create(this);
     this.enemies.create(this);
+    if (this.player.bullets == undefined || this.enemies.enemies == undefined) return ;
+    this.physics.add.collider(this.player.bullets, this.enemies.enemies, (bullet, enemy) => {
+      bullet.destroy();
+      enemy.setData('hp', enemy.getData('hp') - 1);
+      if (enemy.getData('hp') <= 0)
+        enemy.destroy();
+    });
   }
 
   update(time: number, delta: number): void

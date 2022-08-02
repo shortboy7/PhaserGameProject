@@ -11,7 +11,7 @@ export default class Enemy{
 		if (this.enemies == undefined)
 			return ;
 		const newEnemy = this.enemies.create(x, y, Enemy.imgKey) as Phaser.Types.Physics.Arcade.ImageWithDynamicBody;
-		newEnemy.body.gameObject.setData('hp', 1);
+		newEnemy.body.gameObject.setData('hp', 5);
 	}
 	preload(curScene : Phaser.Scene)
 	{
@@ -19,7 +19,9 @@ export default class Enemy{
 	}
 	create(curScene : Phaser.Scene)
 	{
-		this.enemies = curScene.physics.add.group();
+		this.enemies = curScene.physics.add.group({
+			collideWorldBounds : true
+		});
 		this.makeEnemy(100, 10);
 		this.makeEnemy(120, 10);
 	}
