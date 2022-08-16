@@ -1,4 +1,4 @@
-import Phaser, { Physics } from 'phaser'
+import Phaser, { GameObjects, Physics } from 'phaser'
 
 export default class Player{
 	private img: string;
@@ -6,20 +6,24 @@ export default class Player{
 	bullets? : Phaser.Physics.Arcade.Group;
 	nextFire : number;
 	imgKey: string;
-	hp : number;
-
 	constructor(scene : Phaser.Scene, hp_ : number, imgPath : string) {
-		this.hp = hp_;
 		this.img = imgPath;
 		this.imgKey = 'player';
 		this.nextFire = scene.time.now;
 	}
+
 	preload(curScene : Phaser.Scene){
 		curScene.load.image(this.imgKey, this.img);
 	}
-	create(curScene : Phaser.Scene){
-		this.body = curScene.physics.add.image(200, 100, this.imgKey);
+
+	create(curScene : Phaser.Scene)
+	{
+		this.body = curScene.physics.add.image(300, 200,this.imgKey);
 		this.body.setCollideWorldBounds(true);
+		this.body.setState('player');
+		this.body.setData('status', {
+			hp: 5
+		});
 		this.bullets = curScene.physics.add.group({
 			collideWorldBounds:true,
 			velocityY: -100,
@@ -54,7 +58,7 @@ export default class Player{
 				'bullet_player') as Phaser.Types.Physics.Arcade.ImageWithDynamicBody;
 			newBullet.body.onWorldBounds = true;
 			this.nextFire = time + 500;
+			newBullet.setState('player_bullet');
 		}
-
 	}
 }
