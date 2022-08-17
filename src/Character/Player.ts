@@ -18,7 +18,7 @@ export default class Player{
 
 	create(curScene : Phaser.Scene)
 	{
-		this.body = curScene.physics.add.image(300, 200,this.imgKey);
+		this.body = curScene.physics.add.image(200, 600,this.imgKey);
 		this.body.setCollideWorldBounds(true);
 		this.body.setState('player');
 		this.body.setData('status', {

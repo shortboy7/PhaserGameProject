@@ -1,4 +1,5 @@
 import Phaser from 'phaser'
+import MenuScene from './../scenes/MenuScene';
 
 export default class Boss{
 	private static imgKey : string = 'boss';
@@ -20,6 +21,10 @@ export default class Boss{
 	{
 		this.boss = curScene.physics.add.image(300, 100, Boss.imgKey);
 		this.boss.setScale(6,6);
+		this.boss.setData('status',{
+			hp:5,
+		});
+		this.boss.setState('enemy');
 		this.bullets = curScene.physics.add.group({
 			velocityY: 100
 		});
@@ -28,6 +33,13 @@ export default class Boss{
 			const obj = body.gameObject as Phaser.Physics.Arcade.Body;
 			obj.destroy();
 		});
+	}
+	private shotBullets(x : number, y : number, imgKey : string) : Phaser.Types.Physics.Arcade.ImageWithDynamicBody {
+		const newBullet = this.bullets?.create(x, y, imgKey) as Phaser.Types.Physics.Arcade.ImageWithDynamicBody;
+		newBullet.setCollideWorldBounds(true);
+		newBullet.body.onWorldBounds = true;
+		newBullet.setState('enemy_bullet');
+		return newBullet;
 	}
 	private shotlines(lines : number) : void {
 		if (this.boss == undefined || lines <= 0) return ;
@@ -38,7 +50,7 @@ export default class Boss{
 			for (let x = l; x < r; x += (r - l) / lines)
 			{
 				if (x == l || x == r - 1) continue;
-				this.bullets?.create(x, y + 10, 'bullet_player');
+				this.shotBullets(x, y + 10, 'bullet_player');
 			}
 		}
 	}
@@ -49,7 +61,7 @@ export default class Boss{
 		const speed : number = 100;
 		console.log("one loop");
 		for (let i = 0 ; i < ways ; i++) {
-			const newBullet = this.bullets?.create(center.x + round * Math.cos(2 * i * Math.PI / ways),
+			const newBullet = this.shotBullets(center.x + round * Math.cos(2 * i * Math.PI / ways),
 			center.y + round * Math.sin(2 * i * Math.PI / ways), 'bullet_player');
 			newBullet.setVelocity(speed * Math.cos(2 * i * Math.PI / ways), speed * Math.sin(2 * i * Math.PI / ways))
 		}
@@ -66,8 +78,8 @@ export default class Boss{
 		const convertTime = Math.floor(6000 / ways);
 		let i = Math.floor((time - this.razorOn) / convertTime) + 1;
 		const step = (r - l) / (ways + 2);
-		this.bullets?.create(l + step * i, b, 'bullet_player');
-		this.bullets?.create(r - step * i, b, 'bullet_player');
+		this.shotBullets(l + step * i, b, 'bullet_player');
+		this.shotBullets(r - step * i, b, 'bullet_player');
 		if (time > this.razorOff){
 			this.razorOn = -1;
 		}
@@ -83,6 +95,15 @@ export default class Boss{
 	}
 	update(curScene: Phaser.Scene, time : number, delta : number)
 	{
+		if (this.boss == undefined) return;
+		const status = this.boss.getData('status');
+		console.log(status);
+		if (status.hp <= 0)
+		{
+			this.boss.destroy();
+			curScene.scene.start('MenuScene');
+			return ;
+		}
 		if (this.razorOn >= 0) {
 			this.shotRazer(time, 4);
 		}

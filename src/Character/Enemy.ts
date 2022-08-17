@@ -17,14 +17,14 @@ export default class Enemy{
 		Enemy.imgPath = imgPath;
 	}
 
-	private makeEnemy(x : number, y : number, vx : number | undefined, vy : number | undefined) : void {
+	private makeEnemy(x : number, y : number, vx : number | undefined = undefined, vy : number | undefined = undefined) : void {
 		if (this.enemies == undefined)
 			return ;
 		const newEnemy = this.enemies.create(x, y, Enemy.imgKey) as Phaser.Types.Physics.Arcade.ImageWithDynamicBody;
 		if (vx != undefined && vy != undefined)
 			newEnemy.body.setVelocity(vx, vy);
 		newEnemy.body.gameObject.setData('status',{
-			hp:3,
+			hp:1,
 			fireInterval : Phaser.Math.Between(700, 800),
 			nextFire : 0
 		});
@@ -46,9 +46,9 @@ export default class Enemy{
 		this.bullets = curScene.physics.add.group({
 			velocityY: 100
 		});
-		this.makeEnemy(550, 100);
-		this.makeEnemy(600, 100);
-		this.makeEnemy(500, 100);
+		this.makeEnemy(100, 100);
+		this.makeEnemy(200, 100);
+		this.makeEnemy(300, 100);
 		curScene.physics.world.on('worldbounds', (body) => {
 			const obj = body.gameObject as Phaser.Physics.Arcade.Body;
 			obj.destroy();
