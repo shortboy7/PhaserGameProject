@@ -44,10 +44,12 @@ export default class Enemy
 	update(time:number, delta:number) : void {
 		// render with scene flow
 		// shoot...
+
 		this.group.children.iterate((enemyObj) => {
 			const status : status = enemyObj.getData('status');
 			const enemy = enemyObj as Phaser.Types.Physics.Arcade.ImageWithDynamicBody;
 			if (status.nextFire < time) {
+				console.log('shoot', time);
 				this._shooter.shoot(enemy.getCenter().x, enemy.getBottomCenter().y + 5,
 					0, +status.bulletSpeed, status.damage);
 				enemyObj.setData('status', {

@@ -13,11 +13,13 @@ export default class MainGameScene extends Phaser.Scene
   private boss?:Boss;
   constructor()
 	{
+    console.log('constructor called');
     super('MainGameScene');
   }
 
 	preload()
   {
+    console.log('preload is called');
     Shooter.bullet_images.forEach((img) => {
       this.load.image(img.key, img.path);
     });
@@ -61,6 +63,7 @@ export default class MainGameScene extends Phaser.Scene
 
   create()
   {
+    console.log('create called');
     this.add.image(400, 300, 'sky');
     this.player?.create(200,300);
     this.enemy?.create();
@@ -80,6 +83,15 @@ export default class MainGameScene extends Phaser.Scene
 
   update(time: number, delta: number): void
   {
+    if (!this.game.hasFocus) {
+      this.scene.pause();
+      this.add.text(200, 200, 'resume').setOrigin(0.5,0.5)
+      .setInteractive({ useHandCursor: true })
+		  .on('pointerdown', () => {
+        console.log('clicked');
+			  this.scene.resume();
+		  })
+    }
     if (this.player == undefined || this.enemy == undefined) return ;
     this.player.update(time, delta);
     this.enemy.update(time, delta);

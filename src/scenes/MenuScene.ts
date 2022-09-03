@@ -12,7 +12,9 @@ export default class MenuScene extends Phaser.Scene{
 	}
 	create(){
 		this.add.image(400, 300, 'sky');
-		let startBtn = this.add.text(200, 200, 'Start game').setInteractive({ useHandCursor: true })
+		let startBtn = this.add.text(200, 200, 'Start game')
+		.setOrigin(0.5, 0.5)
+		.setInteractive({ useHandCursor: true })
 		.on('pointerdown', () => {
 			this.scene.start('MainGameScene');
 		})
