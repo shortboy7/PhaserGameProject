@@ -1,76 +1,60 @@
 import Phaser from "phaser";
-import Alarm from './../../../../../ReactProject/third_study_assignment/src/Alarm';
+import Shooter from "./Shooter";
+import {image, side, status} from './type'
 
-type EnemyState = {
-	hp : number,
-	fireInterval : number,
-	nextFire : number
-};
-
-export default class Enemy{
-	private static imgKey = 'enemy'
-	private static imgPath : string | undefined;
-	enemies? : Phaser.Physics.Arcade.Group;
-	bullets? : Phaser.Physics.Arcade.Group;
-
-	constructor (imgPath : string) {
-		Enemy.imgPath = imgPath;
+export default class Enemy
+{
+	static enemyImage : image[] = [
+		{key : 'enemy_1', path: 'assets/airplane_enemy_1.png'} ,
+	];
+	private _shooter : Shooter;
+	public group : Phaser.Physics.Arcade.Group;
+	get bullets() : Phaser.Physics.Arcade.Group {
+		return this._shooter.bullets;
 	}
-
-	private makeEnemy(x : number, y : number, vx : number | undefined = undefined, vy : number | undefined = undefined) : void {
-		if (this.enemies == undefined)
-			return ;
-		const newEnemy = this.enemies.create(x, y, Enemy.imgKey) as Phaser.Types.Physics.Arcade.ImageWithDynamicBody;
-		if (vx != undefined && vy != undefined)
-			newEnemy.body.setVelocity(vx, vy);
-		newEnemy.body.gameObject.setData('status',{
-			hp:1,
-			fireInterval : Phaser.Math.Between(700, 800),
-			nextFire : 0
+	// called in scene's preload function
+	constructor(
+		private scene: Phaser.Scene,
+		private enemyKey : string ,
+		private status : status
+	){
+		this.group = this.scene.physics.add.group({
+			bounceX : 0,
+			bounceY : 0,
+			collideWorldBounds : true
 		});
+		this._shooter = new Shooter(this.scene, 'bullet_enemy', 'enemy_bullet');
+	}
+	makeEnemy(
+		createY : number, createX : number,
+		vectorY : number = 0, vectorX : number = 0) : void {
+		const newEnemy : Phaser.Types.Physics.Arcade.ImageWithDynamicBody =
+		this.group.create(createX, createY, this.enemyKey) as Phaser.Types.Physics.Arcade.ImageWithDynamicBody;
+		newEnemy.setVelocity(vectorX, vectorY);
+		newEnemy.setCollideWorldBounds(true);
 		newEnemy.setState('enemy');
+		newEnemy.setData('status', this.status);
 	}
+	preload() : void {
 
-	preload(curScene : Phaser.Scene)
-	{
-		curScene.load.image(Enemy.imgKey, Enemy.imgPath);
 	}
-
-	create(curScene : Phaser.Scene)
-	{
-		this.enemies = curScene.physics.add.group({
-			collideWorldBounds : true,
-			bounceX: 0,
-			bounceY: 0
-		});
-		this.bullets = curScene.physics.add.group({
-			velocityY: 100
-		});
-		this.makeEnemy(100, 100);
-		this.makeEnemy(200, 100);
-		this.makeEnemy(300, 100);
-		curScene.physics.world.on('worldbounds', (body) => {
-			const obj = body.gameObject as Phaser.Physics.Arcade.Body;
-			obj.destroy();
+	create() : void {
+		this._shooter.create();
+	}
+	update(time:number, delta:number) : void {
+		// render with scene flow
+		// shoot...
+		this.group.children.iterate((enemyObj) => {
+			const status : status = enemyObj.getData('status');
+			const enemy = enemyObj as Phaser.Types.Physics.Arcade.ImageWithDynamicBody;
+			if (status.nextFire < time) {
+				this._shooter.shoot(enemy.getCenter().x, enemy.getBottomCenter().y + 5,
+					0, +status.bulletSpeed, status.damage);
+				enemyObj.setData('status', {
+					...status,
+					nextFire: status.nextFire + status.attackSpeed
+				});
+			}
 		});
 	}
-
-	update(curScene : Phaser.Scene, time : number, delta : number)
-	{
-		if (this.enemies == undefined || this.bullets == undefined) return;
-		this.enemies.children.iterate((enemy_c) => {
-			const enemyState = enemy_c.getData('status') as EnemyState;
-			const enemy = enemy_c as Phaser.Types.Physics.Arcade.ImageWithDynamicBody;
-			if (enemyState.nextFire > time) return ;
-			const newBullet = this.bullets?.create(enemy.body.center.x, enemy.body.center.y + 5, 'bullet_player') as
-			Phaser.Types.Physics.Arcade.ImageWithDynamicBody;
-			newBullet.setCollideWorldBounds(true);
-			newBullet.body.onWorldBounds = true;
-			enemy.setData('status', {
-				...enemyState,
-				nextFire : enemyState.nextFire + enemyState.fireInterval
-			});
-			newBullet.setState('enemy_bullet');
-		});
-	}
-};
+}

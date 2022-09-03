@@ -1,135 +1,99 @@
 import Phaser, { Physics } from 'phaser'
+import Collision from '~/Character/Collision';
 import Player from '../Character/Player'
 import Enemy from '../Character/Enemy'
 import Boss from '~/Character/Boss';
+import Shooter from '~/Character/Shooter';
+import {image, side, status} from '../Character/type';
 
 export default class MainGameScene extends Phaser.Scene
 {
-  player?:Player;
-  enemies:Enemy;
-  boss?:Boss;
+  private player?:Player;
+  private enemy? : Enemy;
+  private boss?:Boss;
   constructor()
 	{
     super('main-game');
-    this.enemies = new Enemy('assets/airplane.png');
-    this.boss = new Boss('assets/Boss1.png');
   }
 
 	preload()
   {
-    this.player = new Player(this, 300,'assets/airplane.png');
+    Shooter.bullet_images.forEach((img) => {
+      this.load.image(img.key, img.path);
+    });
+    Enemy.enemyImage.forEach((img) => {
+      this.load.image(img.key, img.path);
+    });
+    this.player = new Player(this,
+      'player','assets/airplane.png',
+      'bullet_player', 'assets/bullet_player.png', {
+        hp:300,
+        attackSpeed : 500,
+        nextFire : 0,
+        moveSpeed : 100,
+        bulletSpeed : 200,
+        damage : 5
+      });
+    this.enemy = new Enemy(this,
+      'enemy_1', {
+        hp: 1,
+        attackSpeed : 500,
+        bulletSpeed : 200,
+        nextFire : 30,
+        moveSpeed : 100,
+        damage : 3
+      });
+    this.boss = new Boss(
+      this, 'boss', 'assets/Boss1.png',
+      {
+        hp : 30,
+        attackSpeed : 1000,
+        bulletSpeed : 200,
+        nextFire : 1000,
+        moveSpeed : 100,
+        damage : 5
+      }
+    );
+    this.player.preload();
+    this.boss.preload();
     this.load.image('sky', 'assets/sky.png');
-    this.load.image('bullet_player', 'assets/bullet_player.png');
-
-    this.player.preload(this);
-    this.enemies.preload(this);
-    this.boss?.preload(this);
   }
 
   create()
   {
     this.add.image(400, 300, 'sky');
-    this.player?.create(this);
-    this.enemies.create(this);
-    // this.boss?.create(this);
-
-    if (this.player == undefined || this.enemies == undefined
-      || this.enemies.bullets == undefined || this.player.body == undefined) return ;
-    if (this.player.bullets == undefined || this.enemies.enemies == undefined) return ;
-    this.physics.add.collider(this.player.bullets, this.enemies.enemies, (bullet, enemy) => {
-      enemy.body.velocity.x -= bullet.body.velocity.x;
-      enemy.body.velocity.y -= bullet.body.velocity.y;
-      bullet.destroy();
-      const status = enemy.getData('status');
-      if (status.hp <= 1)
-        enemy.destroy();
-      enemy.setData('status', {
-        ...status,
-        hp : status.hp - 1
-      });
+    this.player?.create(200,300);
+    this.enemy?.create();
+    this.enemy?.makeEnemy(100, 100);
+    this.enemy?.makeEnemy(100, 200);
+    this.enemy?.makeEnemy(100, 300);
+    if (this.player == undefined || this.enemy == undefined) return ;
+    Collision.bulletAndPlane(this, this.player.bullets, this.enemy.group,
+      'player_bullet', 'enemy');
+    Collision.bulletAndPlane(this, this.enemy.bullets, this.player.airplane,
+      'enemy_bullet', 'player');
+    this.physics.world.on('worldbounds', (body) => {
+      const obj = body.gameObject as Phaser.Physics.Arcade.Body;
+      obj.destroy();
     });
-    this.physics.add.collider(this.enemies.bullets, this.player.body, (one, two) => {
-      if (one == undefined || two == undefined) return;
-      let player :  Phaser.Types.Physics.Arcade.ImageWithDynamicBody;
-      let bullet : Phaser.Types.Physics.Arcade.GameObjectWithBody;
-      if (one.state == 'player')
-        player = one as Phaser.Types.Physics.Arcade.ImageWithDynamicBody;
-      else
-        player = two as Phaser.Types.Physics.Arcade.ImageWithDynamicBody;
-      if (one.state == 'enemy_bullet')
-        bullet = one as Phaser.Types.Physics.Arcade.GameObjectWithBody;
-      else
-        bullet = two as Phaser.Types.Physics.Arcade.GameObjectWithBody;
-      const status = player.getData('status');
-      player.body.velocity.x -= bullet.body.velocity.x;
-      player.body.velocity.y -= bullet.body.velocity.y;
-      bullet.destroy();
-      player.setData('status', {
-        hp : status.hp - 1
-      });
-    });
-    if (this.boss?.bullets != undefined)
-
   }
 
   update(time: number, delta: number): void
   {
-    if (this.player?.body?.getData('status').hp <= 0)
-      this.scene.pause();
-    if (this.enemies?.enemies?.getChildren().length == 0 && this.boss?.boss == undefined)
+    if (this.player == undefined || this.enemy == undefined) return ;
+    this.player.update(time, delta);
+    this.enemy.update(time, delta);
+    if (this.enemy.group.children.size == 0)
     {
-      if (this.player != undefined && this.player.bullets != undefined){
-        this.boss?.create(this);
-        if (this.boss != undefined && this.boss.boss != undefined && this.boss.bullets != undefined &&
-          this.player.body != undefined){
-          this.physics.add.collider(this.player.bullets, this.boss.boss, (one, two) => {
-            if (one == undefined || two == undefined) return;
-            let enemy :  Phaser.Types.Physics.Arcade.ImageWithDynamicBody;
-            let bullet : Phaser.Types.Physics.Arcade.GameObjectWithBody;
-            if (one.state == 'enemy')
-              enemy = one as Phaser.Types.Physics.Arcade.ImageWithDynamicBody;
-            else
-              enemy = two as Phaser.Types.Physics.Arcade.ImageWithDynamicBody;
-            if (one.state == 'player_bullet')
-              bullet = one as Phaser.Types.Physics.Arcade.GameObjectWithBody;
-            else
-              bullet = two as Phaser.Types.Physics.Arcade.GameObjectWithBody;
-
-
-          enemy.body.velocity.x -= bullet.body.velocity.x;
-          enemy.body.velocity.y -= bullet.body.velocity.y;
-          bullet.destroy();
-          const status = enemy.getData('status');
-            enemy.setData('status', {
-              ...status,
-              hp : status.hp - 1
-            });
-          });
-          this.physics.add.collider(this.boss?.bullets, this.player.body, (one, two) => {
-            if (one == undefined || two == undefined) return;
-            let player :  Phaser.Types.Physics.Arcade.ImageWithDynamicBody;
-            let bullet : Phaser.Types.Physics.Arcade.GameObjectWithBody;
-            if (one.state == 'player')
-              player = one as Phaser.Types.Physics.Arcade.ImageWithDynamicBody;
-            else
-              player = two as Phaser.Types.Physics.Arcade.ImageWithDynamicBody;
-            if (one.state == 'enemy_bullet')
-              bullet = one as Phaser.Types.Physics.Arcade.GameObjectWithBody;
-            else
-              bullet = two as Phaser.Types.Physics.Arcade.GameObjectWithBody;
-            const status = player.getData('status');
-            player.body.velocity.x -= bullet.body.velocity.x;
-            player.body.velocity.y -= bullet.body.velocity.y;
-            bullet.destroy();
-            player.setData('status', {
-              hp : status.hp - 1
-            });
-          });
-        }
+      if (this.boss == undefined) return ;
+      if (this.boss._airplane == undefined) {
+        this.boss.create(200, 100);
+        Collision.bulletAndPlane(this, this.boss.bullets, this.player.airplane,
+          'enemy_bullet', 'player');
+        Collision.bulletAndPlane(this, this.player.bullets, this.boss.airplane,
+          'player_bullet', 'boss');
       }
+      this.boss.update(time, delta);
     }
-    this.player?.update(this, time, delta);
-    this.enemies?.update(this, time, delta);
-    this.boss?.update(this, time, delta);
   }
 }
