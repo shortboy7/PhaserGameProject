@@ -13,7 +13,7 @@ export default class MainGameScene extends Phaser.Scene
   private boss?:Boss;
   constructor()
 	{
-    super('main-game');
+    super('MainGameScene');
   }
 
 	preload()
